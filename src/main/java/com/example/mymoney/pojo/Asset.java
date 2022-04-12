@@ -31,7 +31,6 @@ public class Asset {
             this.amount = amount;
         else
             this.amount = this.amount.add(amount);
-
     }
 
 }

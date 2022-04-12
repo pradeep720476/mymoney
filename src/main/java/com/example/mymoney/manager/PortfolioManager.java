@@ -1,4 +1,4 @@
-package com.example.mymoney.Service;
+package com.example.mymoney.manager;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ import com.example.mymoney.pojo.Asset;
 import com.example.mymoney.pojo.Holding;
 import com.example.mymoney.utils.InvestmentCalculator;
 
-public class Portfolio {
+public class PortfolioManager implements Portfolio {
     private Map<Month, Holding> statment = new LinkedHashMap<>();
     private List<BigDecimal> sip = new ArrayList<>();
     private List<Float> derivedPercents = new ArrayList<>();
@@ -25,7 +25,7 @@ public class Portfolio {
         if (statment.containsKey(month)) {
             return statment.get(month).getAllAssets();
         }
-        return List.of();
+        return new ArrayList<>();
     }
 
     public boolean canRebalance() {
@@ -51,24 +51,25 @@ public class Portfolio {
 
     public void change(List<Float> percents, Month month) {
         if (this.statment.containsKey((month))) {
-            int index = 0;
             addPreviousHoldingToCurrentMonth(month);
             Holding currenHolding = this.statment.get(month);
-            for (Asset asset : currenHolding.getAllAssets()) {
-                asset.addAmount(InvestmentCalculator.change(asset.getAmount(),
-                        percents.get(index++)));
-            }
+            applyMarketChange(currenHolding, percents);
         } else {
             this.sip(this.sip, month);
             addPreviousHoldingToCurrentMonth(month);
             Holding afterSIP = this.statment.get(month);
-            List<Asset> previous = afterSIP.getAllAssets();
-            int index = 0;
-            for (Asset asset : previous) {
-                asset.addAmount(InvestmentCalculator.change(asset.getAmount(),
-                        percents.get(index++)));
+            applyMarketChange(afterSIP, percents);
+            if (month == Month.JUNE || month == Month.DECEMBER)
+                this.rebalance(month);
+        }
+    }
 
-            }
+    public void applyMarketChange(Holding holdings, List<Float> percents) {
+        int index = 0;
+        for (Asset asset : holdings.getAllAssets()) {
+            asset.addAmount(InvestmentCalculator.change(asset.getAmount(),
+                    percents.get(index++)));
+
         }
     }
 
@@ -114,5 +115,4 @@ public class Portfolio {
                 }
             }
     }
-
 }
